@@ -1089,30 +1089,6 @@
                 description: 'Acampamento das tribos indígenas locais.',
             },
             
-            tribos_tenda_chefe: {
-                id: 'tribos_tenda_chefe',
-                name: 'Tenda do Chefe',
-                imgBase: 'Tribos_Tenda_Chefe',
-                imgExt: '.png',
-                icon: '👑',
-                description: 'Tenda do líder tribal.',
-                hotspots: [
-                    { id: 'tribos', title: 'Sair da Tenda', position: { bottom: '5%', left: '50%' } }
-                ]
-            },
-            
-            tribos_casa_comercio: {
-                id: 'tribos_casa_comercio',
-                name: 'Casa de Comércio',
-                imgBase: 'Tribos_Casa_Comercio',
-                imgExt: '.png',
-                icon: '🛒',
-                description: 'Ponto de troca de mercadorias.',
-                hotspots: [
-                    { id: 'tribos', title: 'Sair', position: { bottom: '5%', left: '50%' } }
-                ]
-            },
-            
             // ============ REGIÃO LESTE (CANYON & WHISKEY CREEK) ============
             regiao_leste: {
                 id: 'regiao_leste',
@@ -1121,6 +1097,16 @@
                 imgExt: '.png',
                 icon: '🏜️',
                 description: 'Região dos canyons e Whiskey Creek.',
+                hotspots: [ {id: 'loja_de_armas', title: 'Loja de armas', position: { top: '38%', left: '27%' } }]
+            },
+
+            loja_de_armas:{
+                id: 'loja_de_armas',
+                name: 'Loja de Armas',
+                imgBase: 'loja_de_armas',
+                imgExt: '.png',
+                icon: '',
+                description: 'loja de armas da região leste',
                 hotspots: []
             },
             
