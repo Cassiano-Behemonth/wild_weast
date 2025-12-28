@@ -1,0 +1,1941 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Velho Albatroz - Sistema de Mapas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(to bottom, #2a1a0f, #1a0f08);
+            color: #e8d4b8;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 3px solid #6b4423;
+            margin-bottom: 30px;
+            background: linear-gradient(to bottom, rgba(107, 68, 35, 0.2), transparent);
+        }
+
+        h1 {
+            font-size: 3.5em;
+            color: #d4a574;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.9);
+            letter-spacing: 8px;
+            font-weight: bold;
+        }
+
+        .subtitle {
+            font-style: italic;
+            color: #a08060;
+            margin-top: 10px;
+        }
+
+        .map-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+            margin-top: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .main-map {
+            position: relative;
+            background: #3a2820;
+            border: 3px solid #6b4423;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+        }
+
+        .map-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .back-button {
+            padding: 10px 20px;
+            background: #6b4423;
+            color: #ffd700;
+            border: 2px solid #7b5433;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            font-size: 1em;
+            font-weight: bold;
+            display: none;
+            transition: all 0.3s ease;
+        }
+
+        .back-button.visible {
+            display: block;
+        }
+
+        .back-button:hover {
+            background: #7b5433;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+        }
+
+        /* Breadcrumb navigation */
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 15px;
+            background: rgba(34, 22, 18, 0.7);
+            border-radius: 6px;
+            border: 1px solid #6b4423;
+            font-size: 0.95em;
+            color: #a08060;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .breadcrumb-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .breadcrumb-link {
+            color: #d4a574;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .breadcrumb-link:hover {
+            color: #ffd700;
+            background: rgba(107, 68, 35, 0.5);
+        }
+
+        .breadcrumb-separator {
+            color: #6b4423;
+            font-weight: bold;
+        }
+
+        .breadcrumb-current {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        /* Floor Selector System */
+        .floor-selector {
+            position: absolute;
+            top: 60px;
+            right: 15px;
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 50;
+        }
+
+        .floor-selector.visible {
+            display: flex;
+        }
+
+        .floor-button {
+            width: 50px;
+            height: 50px;
+            background: rgba(58, 40, 32, 0.95);
+            border: 2px solid #6b4423;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        .floor-button:hover {
+            background: rgba(107, 68, 35, 0.95);
+            border-color: #ffd700;
+            transform: translateX(-5px) scale(1.08);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+        }
+
+        .floor-button.active {
+            background: rgba(107, 68, 35, 1);
+            border-color: #ffd700;
+            border-width: 3px;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+        }
+
+        .floor-label {
+            font-family: 'Courier New', monospace;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #a08060;
+            letter-spacing: 1px;
+        }
+
+        .floor-button.active .floor-label {
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .current-map-title {
+            flex: 1;
+            color: #ffd700;
+            font-size: 1.2em;
+            font-weight: bold;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .control-btn {
+            padding: 8px 16px;
+            background: #6b4423;
+            color: #e8d4b8;
+            border: 2px solid #7b5433;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Georgia', serif;
+            font-size: 0.9em;
+        }
+
+        .control-btn:hover {
+            background: #7b5433;
+            transform: translateY(-2px);
+        }
+
+        .control-btn.active {
+            background: #8b6443;
+            border-color: #9b7453;
+        }
+
+        .map-image-container {
+            position: relative;
+            width: 100%;
+            background: #2a1a12;
+            border: 2px solid #6b4423;
+            border-radius: 4px;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+
+        .map-image-container.placing-character {
+            cursor: copy;
+        }
+
+        .map-image {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* Hotspots de Localização */
+        .hotspot {
+            position: absolute;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            animation: pulse 2s infinite;
+            z-index: 10;
+        }
+
+        .hotspot:hover {
+            transform: scale(1.2);
+            filter: brightness(1.5);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        .hotspot-marker {
+            width: 30px;
+            height: 30px;
+            background: radial-gradient(circle, rgba(212, 165, 116, 0.9), rgba(139, 100, 67, 0.6));
+            border: 2px solid #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(212, 165, 116, 0.8);
+        }
+
+        /* Hotspot Secreto - Pequeno e Discreto */
+        .hotspot-marker.secret {
+            width: 12px;
+            height: 12px;
+            background: radial-gradient(circle, rgba(80, 70, 60, 0.4), rgba(50, 45, 40, 0.3));
+            border: 1px solid rgba(100, 90, 80, 0.5);
+            box-shadow: 0 0 8px rgba(80, 70, 60, 0.3);
+            opacity: 0.6;
+            transition: all 0.3s ease;
+        }
+
+        .hotspot-marker.secret:hover {
+            width: 20px;
+            height: 20px;
+            opacity: 1;
+            background: radial-gradient(circle, rgba(150, 120, 90, 0.7), rgba(100, 80, 60, 0.5));
+            border: 2px solid rgba(200, 160, 120, 0.8);
+            box-shadow: 0 0 15px rgba(150, 120, 90, 0.6);
+        }
+
+        /* Hotspot Semi-Escondido */
+        .hotspot-marker.hidden {
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle, rgba(160, 130, 100, 0.5), rgba(120, 90, 70, 0.4));
+            border: 1px solid rgba(140, 110, 80, 0.6);
+            box-shadow: 0 0 12px rgba(160, 130, 100, 0.4);
+            opacity: 0.7;
+            transition: all 0.3s ease;
+        }
+
+        .hotspot-marker.hidden:hover {
+            width: 28px;
+            height: 28px;
+            opacity: 1;
+            background: radial-gradient(circle, rgba(200, 160, 120, 0.8), rgba(160, 120, 90, 0.6));
+            border: 2px solid rgba(200, 160, 120, 0.9);
+            box-shadow: 0 0 18px rgba(200, 160, 120, 0.7);
+        }
+
+        /* Marcadores de Personagens */
+        .character-marker {
+            position: absolute;
+            cursor: move;
+            transition: all 0.2s ease;
+            z-index: 20;
+            user-select: none;
+        }
+
+        .character-marker:hover {
+            transform: scale(1.15);
+            z-index: 30;
+        }
+
+        .character-marker.selected {
+            z-index: 25;
+        }
+
+        .character-marker.selected .character-icon {
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 4px 12px rgba(0,0,0,0.6);
+            border-width: 4px;
+        }
+
+        .character-marker.dragging {
+            opacity: 0.7;
+            cursor: grabbing;
+        }
+
+        .character-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 3px solid;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+            background: rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .character-label {
+            position: absolute;
+            top: 45px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            white-space: nowrap;
+            pointer-events: none;
+            border: 1px solid;
+        }
+
+        .character-remove {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 20px;
+            height: 20px;
+            background: #c41e3a;
+            color: white;
+            border: 2px solid white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7em;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .character-marker:hover .character-remove {
+            opacity: 1;
+        }
+
+        /* Tipos de personagens */
+        .character-player .character-icon {
+            background: rgba(30, 144, 255, 0.8);
+            border-color: #1e90ff;
+        }
+        .character-player .character-label {
+            border-color: #1e90ff;
+        }
+
+        .character-npc .character-icon {
+            background: rgba(50, 205, 50, 0.8);
+            border-color: #32cd32;
+        }
+        .character-npc .character-label {
+            border-color: #32cd32;
+        }
+
+        .character-enemy .character-icon {
+            background: rgba(220, 20, 60, 0.8);
+            border-color: #dc143c;
+        }
+        .character-enemy .character-label {
+            border-color: #dc143c;
+        }
+
+        .character-mystery .character-icon {
+            background: rgba(148, 0, 211, 0.8);
+            border-color: #9400d3;
+        }
+        .character-mystery .character-label {
+            border-color: #9400d3;
+        }
+
+        .location-info {
+            background: #3a2820;
+            border: 3px solid #6b4423;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+            height: fit-content;
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+            display: none;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .location-info.visible {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .panel-close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #c41e3a;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 10;
+            line-height: 1;
+        }
+
+        .panel-close-btn:hover {
+            background: #d41e3a;
+            transform: scale(1.15);
+            box-shadow: 0 4px 12px rgba(196, 30, 58, 0.5);
+        }
+
+        .location-info h2 {
+            color: #d4a574;
+            border-bottom: 2px solid #6b4423;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+        }
+
+        .character-form {
+            background: #2a1a12;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #6b4423;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #c8b090;
+            font-size: 0.9em;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            background: #3a2820;
+            border: 1px solid #6b4423;
+            border-radius: 4px;
+            color: #e8d4b8;
+            font-family: 'Georgia', serif;
+        }
+
+        .add-character-btn {
+            width: 100%;
+            padding: 10px;
+            background: #7b5433;
+            color: #e8d4b8;
+            border: 2px solid #8b6443;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            transition: all 0.3s ease;
+        }
+
+        .add-character-btn:hover {
+            background: #8b6443;
+            transform: translateY(-2px);
+        }
+
+        .characters-list {
+            margin-top: 20px;
+        }
+
+        .character-item {
+            background: #2a1a12;
+            padding: 12px;
+            border-radius: 4px;
+            border-left: 4px solid;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .character-item.player { border-color: #1e90ff; }
+        .character-item.npc { border-color: #32cd32; }
+        .character-item.enemy { border-color: #dc143c; }
+        .character-item.mystery { border-color: #9400d3; }
+
+        .character-info {
+            flex: 1;
+        }
+
+        .character-name {
+            font-weight: bold;
+            color: #d4a574;
+        }
+
+        .character-type {
+            font-size: 0.8em;
+            color: #a08060;
+            font-style: italic;
+        }
+
+        .character-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 4px 8px;
+            background: #6b4423;
+            border: 1px solid #7b5433;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8em;
+            color: #e8d4b8;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: #7b5433;
+        }
+
+        .default-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: #a08060;
+            font-style: italic;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.9);
+            color: #e8d4b8;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 1000;
+            border: 1px solid #6b4423;
+            white-space: nowrap;
+        }
+
+        /* Selection Box */
+        .selection-box {
+            position: absolute;
+            border: 2px dashed #ffd700;
+            background: rgba(255, 215, 0, 0.1);
+            pointer-events: none;
+            z-index: 100;
+            display: none;
+        }
+
+        .selection-box.active {
+            display: block;
+        }
+
+        .map-image-container.selecting {
+            cursor: crosshair;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Fog of War System */
+        .fog-layer {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 15;
+            display: none;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            overflow: hidden;
+        }
+
+        .fog-layer.active {
+            display: block;
+            opacity: 1;
+        }
+
+        /* Nuvens de poeira do deserto 1 - Movimento esquerda para direita */
+        .fog-overlay {
+            position: absolute;
+            inset: -100px;
+            background: 
+                radial-gradient(ellipse 600px 400px at 20% 30%, rgba(180, 150, 110, 0.25), transparent 50%),
+                radial-gradient(ellipse 500px 350px at 50% 50%, rgba(170, 140, 100, 0.2), transparent 50%),
+                radial-gradient(ellipse 550px 380px at 80% 70%, rgba(175, 145, 105, 0.23), transparent 50%);
+            animation: fogDriftRight 30s linear infinite;
+            filter: blur(40px);
+        }
+
+        @keyframes fogDriftRight {
+            0% { 
+                transform: translateX(-100%);
+            }
+            100% { 
+                transform: translateX(100%);
+            }
+        }
+
+        /* Nuvens de poeira 2 */
+        .fog-veil {
+            position: absolute;
+            inset: -100px;
+            background: 
+                radial-gradient(ellipse 550px 370px at 30% 40%, rgba(160, 130, 90, 0.2), transparent 50%),
+                radial-gradient(ellipse 480px 340px at 60% 60%, rgba(155, 125, 85, 0.18), transparent 50%),
+                radial-gradient(ellipse 520px 360px at 90% 20%, rgba(165, 135, 95, 0.22), transparent 50%);
+            animation: fogDriftRight 45s linear infinite;
+            filter: blur(50px);
+            animation-delay: -15s;
+        }
+
+        /* Nuvens de poeira 3 - Movimento direita para esquerda */
+        .fog-dense-layer {
+            position: absolute;
+            inset: -100px;
+            background: 
+                radial-gradient(ellipse 580px 390px at 40% 25%, rgba(150, 120, 80, 0.18), transparent 50%),
+                radial-gradient(ellipse 490px 330px at 70% 75%, rgba(145, 115, 75, 0.15), transparent 50%);
+            animation: fogDriftLeft 40s linear infinite;
+            filter: blur(45px);
+            animation-delay: -10s;
+        }
+
+        @keyframes fogDriftLeft {
+            0% { 
+                transform: translateX(100%);
+            }
+            100% { 
+                transform: translateX(-100%);
+            }
+        }
+
+        /* Nuvens flutuantes 4 */
+        .fog-float-layer {
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(ellipse 650px 420px at 15% 20%, rgba(190, 160, 120, 0.3), transparent 50%),
+                radial-gradient(ellipse 580px 390px at 85% 80%, rgba(180, 150, 110, 0.32), transparent 50%),
+                radial-gradient(ellipse 620px 400px at 45% 55%, rgba(185, 155, 115, 0.28), transparent 50%);
+            animation: fogFloatInPlace1 20s ease-in-out infinite;
+            filter: blur(55px);
+        }
+
+        @keyframes fogFloatInPlace1 {
+            0%, 100% { 
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            33% { 
+                transform: translate(40px, -30px) scale(1.08);
+                opacity: 0.85;
+            }
+            66% { 
+                transform: translate(-35px, 35px) scale(0.92);
+                opacity: 0.9;
+            }
+        }
+
+        /* Nuvens flutuantes 5 */
+        .fog-ambient-layer {
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(ellipse 700px 450px at 50% 30%, rgba(170, 140, 100, 0.28), transparent 50%),
+                radial-gradient(ellipse 600px 380px at 25% 70%, rgba(160, 130, 90, 0.3), transparent 50%),
+                radial-gradient(ellipse 550px 360px at 75% 45%, rgba(165, 135, 95, 0.26), transparent 50%);
+            animation: fogFloatInPlace2 28s ease-in-out infinite;
+            filter: blur(60px);
+            animation-delay: -7s;
+        }
+
+        @keyframes fogFloatInPlace2 {
+            0%, 100% { 
+                transform: translate(0, 0) rotate(0deg);
+                opacity: 1;
+            }
+            50% { 
+                transform: translate(-45px, 40px) rotate(5deg);
+                opacity: 0.8;
+            }
+        }
+
+        /* Névoa de fundo pulsante */
+        .fog-pulse-layer {
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(
+                    ellipse at center,
+                    transparent 0%,
+                    transparent 20%,
+                    rgba(150, 120, 80, 0.15) 50%,
+                    rgba(130, 100, 60, 0.2) 100%
+                );
+            animation: fogPulse 12s ease-in-out infinite;
+            filter: blur(35px);
+        }
+
+        @keyframes fogPulse {
+            0%, 100% { 
+                opacity: 0.9;
+                transform: scale(1);
+            }
+            50% { 
+                opacity: 1;
+                transform: scale(1.12);
+            }
+        }
+
+        /* Partículas de poeira */
+        .fog-particles {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                radial-gradient(circle 2px at 15% 25%, rgba(200, 180, 140, 0.4), transparent),
+                radial-gradient(circle 1px at 45% 35%, rgba(190, 170, 130, 0.25), transparent),
+                radial-gradient(circle 2px at 75% 15%, rgba(195, 175, 135, 0.35), transparent),
+                radial-gradient(circle 1px at 25% 65%, rgba(185, 165, 125, 0.3), transparent),
+                radial-gradient(circle 2px at 85% 55%, rgba(200, 180, 140, 0.35), transparent),
+                radial-gradient(circle 1px at 55% 75%, rgba(190, 170, 130, 0.25), transparent),
+                radial-gradient(circle 2px at 10% 85%, rgba(195, 175, 135, 0.4), transparent),
+                radial-gradient(circle 1px at 90% 85%, rgba(185, 165, 125, 0.25), transparent),
+                radial-gradient(circle 2px at 40% 50%, rgba(200, 180, 140, 0.35), transparent),
+                radial-gradient(circle 1px at 70% 30%, rgba(190, 170, 130, 0.3), transparent);
+            background-size: 200% 200%;
+            animation: fogParticlesDrift 25s linear infinite;
+            opacity: 0.6;
+        }
+
+        @keyframes fogParticlesDrift {
+            0% { 
+                background-position: 0% 50%;
+            }
+            100% { 
+                background-position: 100% 50%;
+            }
+        }
+
+        /* Inline Name Input */
+        .inline-name-input {
+            position: absolute;
+            display: none;
+            z-index: 1000;
+        }
+
+        .inline-name-input.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .inline-name-box {
+            background: rgba(34, 22, 18, 0.98);
+            border: 3px solid #ffd700;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.8);
+            min-width: 250px;
+        }
+
+        .inline-name-label {
+            color: #ffd700;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .inline-name-field {
+            width: 100%;
+            padding: 10px;
+            background: #2a1a12;
+            border: 2px solid #6b4423;
+            border-radius: 4px;
+            color: #e8d4b8;
+            font-family: 'Georgia', serif;
+            font-size: 1em;
+            margin-bottom: 10px;
+        }
+
+        .inline-name-field:focus {
+            outline: none;
+            border-color: #ffd700;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+        }
+
+        .inline-name-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .inline-name-btn {
+            flex: 1;
+            padding: 8px;
+            border: 2px solid;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            font-size: 0.9em;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+
+        .inline-name-btn-ok {
+            background: #7b5433;
+            color: #ffd700;
+            border-color: #8b6443;
+        }
+
+        .inline-name-btn-ok:hover {
+            background: #8b6443;
+        }
+
+        .inline-name-btn-cancel {
+            background: #6b4423;
+            color: #c8b090;
+            border-color: #7b5433;
+        }
+
+        .inline-name-btn-cancel:hover {
+            background: #7b5433;
+        }
+
+        @media (max-width: 1200px) {
+            .map-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>VELHO ALBATROZ</h1>
+            <p class="subtitle">Sistema de Mapas Interativo</p>
+        </header>
+
+        <div class="map-container">
+            <div class="main-map">
+                <!-- Breadcrumb Navigation -->
+                <div class="breadcrumb" id="breadcrumb">
+                    <div class="breadcrumb-item">
+                        <span class="breadcrumb-link" onclick="navigateToBreadcrumb(0)">🗺️ Velho Albatroz</span>
+                    </div>
+                </div>
+
+                <div class="map-controls">
+                    <button class="back-button" id="backButton" onclick="goBackOneLevel()">
+                        ← Voltar
+                    </button>
+                    <div class="current-map-title" id="currentMapTitle">Velho Albatroz</div>
+                </div>
+                
+                <div class="map-controls">
+                    <button class="control-btn" onclick="quickAddCharacter()">
+                        ➕ Adicionar Personagem
+                    </button>
+                    <button class="control-btn" onclick="toggleLocations()" id="toggleLocationsBtn">
+                        📍 Ocultar Locais
+                    </button>
+                    <button class="control-btn" onclick="copySelectedCharacters()" id="copyBtn">
+                        📋 Copiar Selecionados
+                    </button>
+                    <button class="control-btn" onclick="pasteCharacters()" id="pasteBtn" disabled>
+                        📄 Colar Personagens
+                    </button>
+                    <button class="control-btn" onclick="deselectAll()">
+                        ☐ Deselecionar Todos
+                    </button>
+                    <button class="control-btn" onclick="deleteSelected()">
+                        🗑️ Remover Selecionados
+                    </button>
+                </div>
+                
+                <div style="margin-bottom: 15px; padding: 8px; background: rgba(34, 22, 18, 0.5); border-radius: 4px; border: 1px solid #6b4423; font-size: 0.85em; color: #a08060; text-align: center;">
+                    ⌨️ <strong style="color: #ffd700;">F</strong>=Névoa de Poeira | <strong style="color: #ffd700;">Ctrl+C</strong>=Copiar | <strong style="color: #ffd700;">Ctrl+V</strong>=Colar | <strong style="color: #ffd700;">Del</strong>=Remover
+                </div>
+
+                <div class="map-image-container" id="mapContainer">
+                    <div class="selection-box" id="selectionBox"></div>
+                    
+                    <!-- Floor Selector -->
+                    <div class="floor-selector" id="floorSelector"></div>
+                    
+                    <!-- Inline Name Input -->
+                    <div class="inline-name-input" id="inlineNameInput">
+                        <div class="inline-name-box">
+                            <label class="inline-name-label">Nome do Personagem:</label>
+                            <input type="text" class="inline-name-field" id="inlineNameField" placeholder="Digite o nome..." maxlength="50">
+                            <div class="inline-name-buttons">
+                                <button class="inline-name-btn inline-name-btn-ok" onclick="confirmInlineName()">✓ OK</button>
+                                <button class="inline-name-btn inline-name-btn-cancel" onclick="cancelInlineName()">✕ Cancelar</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <img src="Mapa_geral.png" alt="Velho Albatroz" class="map-image" id="mapImage">
+                    
+                    <!-- Fog of War Layer - Poeira do Deserto! -->
+                    <div class="fog-layer" id="fogLayer">
+                        <div class="fog-pulse-layer"></div>
+                        <div class="fog-veil"></div>
+                        <div class="fog-overlay"></div>
+                        <div class="fog-dense-layer"></div>
+                        <div class="fog-float-layer"></div>
+                        <div class="fog-ambient-layer"></div>
+                        <div class="fog-particles"></div>
+                    </div>
+                    
+                    <!-- Hotspots serão adicionados dinamicamente -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        // ========================================================================
+        // CONFIGURAÇÃO DA ESTRUTURA DE MAPAS E ANDARES
+        // ========================================================================
+        
+        const mapHierarchy = {
+            general: {
+                id: 'general',
+                name: 'Velho Albatroz',
+                imgBase: 'Mapa_geral',
+                imgExt: '.png',
+                icon: '🗺️',
+                hotspots: [
+                    { id: 'pico_abutre', title: 'Pico Abutre', position: { top: '18%', left: '23%' } },
+                    { id: 'sabubre', title: 'Sabubre', position: { top: '27%', right: '25%' } },
+                    { id: 'ouroboros', title: 'Ouroboros', position: { top: '38%', left: '48%' } },
+                    { id: 'regiao_leste', title: 'Região Leste (Canyon & Whiskey Creek)', position: { top: '40%', right: '15%' } },
+                    { id: 'tribos', title: 'Tribos do Vento Sul', position: { top: '61%', left: '30%' } },
+                    { id: 'gargantas', title: 'Gargantas do Desespero', position: { top: '48%', left: '12%' } },
+                    { id: 'dustty_spur', title: 'Dustty Spur', position: { bottom: '12%', left: '18%' } }
+                ]
+            },
+            
+            // ============ SABUBRE - CIDADE PRINCIPAL ============
+            sabubre: {
+                id: 'sabubre',
+                name: 'Sabubre',
+                imgBase: 'Sabubre',
+                imgExt: '.png',
+                icon: '🏘️',
+                description: 'Cidade principal da região com mercado, banco e bar.',
+                hotspots: [
+                    { id: 'sabubre_mercado', title: 'Mercado', position: { top: '38%', left: '27%' } },
+                    { id: 'sabubre_banco', title: 'Banco', position: { bottom: '39%', left: '22%' } },
+                    { id: 'sabubre_bar', title: 'Bar', position: { top: '40%', right: '35%' } }
+                ]
+            },
+            
+            sabubre_mercado: {
+                id: 'sabubre_mercado',
+                name: 'Mercado de Sabubre',
+                imgBase: 'Sabubre_Mercado',
+                imgExt: '.png',
+                icon: '🏪',
+                description: 'Mercado de suprimentos e mantimentos.',
+            },
+            
+            sabubre_banco: {
+                id: 'sabubre_banco',
+                name: 'Banco de Sabubre',
+                imgBase: 'Sabubre_Banco',
+                imgExt: '.png',
+                icon: '🏦',
+                description: 'Banco da cidade.',
+                hotspots: [
+                    { id: 'sabubre', title: 'Sair do Banco', position: { bottom: '5%', left: '50%' } }
+                ]
+            },
+            
+            sabubre_bar: {
+                id: 'sabubre_bar',
+                name: 'Bar de Sabubre',
+                imgBase: 'Sabubre_Bar',
+                imgExt: '.png',
+                icon: '🍺',
+                description: 'Bar local.',
+                hotspots: [
+                    { id: 'sabubre', title: 'Sair do Bar', position: { bottom: '5%', left: '50%' } }
+                ]
+            },
+            
+            // ============ OUROBOROS (ENTRE SABUBRE E TRIBOS) ============
+            ouroboros: {
+                id: 'ouroboros',
+                name: 'Ouroboros',
+                imgBase: 'Ouroboros',
+                imgExt: '.png',
+                icon: '🐍',
+                description: 'Local misterioso conhecido como Ouroboros.',
+                hotspots: []
+            },
+            
+            // ============ TRIBOS DO VENTO SUL ============
+            tribos: {
+                id: 'tribos',
+                name: 'Tribos do Vento Sul',
+                imgBase: 'Tribos_do_vento_sul',
+                imgExt: '.png',
+                icon: '🏕️',
+                description: 'Acampamento das tribos indígenas locais.',
+            },
+            
+            tribos_tenda_chefe: {
+                id: 'tribos_tenda_chefe',
+                name: 'Tenda do Chefe',
+                imgBase: 'Tribos_Tenda_Chefe',
+                imgExt: '.png',
+                icon: '👑',
+                description: 'Tenda do líder tribal.',
+                hotspots: [
+                    { id: 'tribos', title: 'Sair da Tenda', position: { bottom: '5%', left: '50%' } }
+                ]
+            },
+            
+            tribos_casa_comercio: {
+                id: 'tribos_casa_comercio',
+                name: 'Casa de Comércio',
+                imgBase: 'Tribos_Casa_Comercio',
+                imgExt: '.png',
+                icon: '🛒',
+                description: 'Ponto de troca de mercadorias.',
+                hotspots: [
+                    { id: 'tribos', title: 'Sair', position: { bottom: '5%', left: '50%' } }
+                ]
+            },
+            
+            // ============ REGIÃO LESTE (CANYON & WHISKEY CREEK) ============
+            regiao_leste: {
+                id: 'regiao_leste',
+                name: 'Região Leste',
+                imgBase: 'leste-fim-do-canyion',
+                imgExt: '.png',
+                icon: '🏜️',
+                description: 'Região dos canyons e Whiskey Creek.',
+                hotspots: []
+            },
+            
+            // ============ OUTRAS LOCALIZAÇÕES (MAPAS SIMPLES) ============
+            pico_abutre: {
+                id: 'pico_abutre',
+                name: 'Pico Abutre',
+                imgBase: 'Pico_Abutre',
+                imgExt: '.png',
+                icon: '🦅',
+                description: 'Pico mais alto da região.'
+            },
+            
+            gargantas: {
+                id: 'gargantas',
+                name: 'Gargantas do Desespero',
+                imgBase: 'Gargantas_do_Desespero',
+                imgExt: '.png',
+                icon: '⛰️',
+                description: 'Gargantas rochosas traiçoeiras.'
+            },
+            
+            dustty_spur: {
+                id: 'dustty_spur',
+                name: 'Dustty Spur',
+                imgBase: 'Dustty_Spur',
+                imgExt: '.png',
+                icon: '🌪️',
+                description: 'Pequena cidade empoeirada.'
+            }
+        };
+
+        // ========================================================================
+        // ESTADO DA APLICAÇÃO
+        // ========================================================================
+        
+        let characters = [];
+        let nextCharId = 1;
+        let placingCharacter = null;
+        let locationsVisible = true;
+        let selectedCharacters = new Set();
+        let isSelecting = false;
+        let selectionStart = { x: 0, y: 0 };
+        let isDraggingGroup = false;
+        let dragGroupStart = { x: 0, y: 0 };
+        
+        // Navigation state
+        let navigationPath = ['general'];
+        let charactersByLocation = {};
+        
+        // Inline name input
+        let pendingCharacterPosition = null;
+        
+        // Fog system
+        let fogEnabled = false;
+        
+        // Copy/Paste system
+        let copiedCharacters = [];
+
+        // ========================================================================
+        // FUNÇÕES DE NAVEGAÇÃO
+        // ========================================================================
+        
+        function getCurrentLocation() {
+            return navigationPath[navigationPath.length - 1];
+        }
+        
+        function getLocationData(locationId) {
+            return mapHierarchy[locationId];
+        }
+        
+        function navigateToLocation(locationId) {
+            if (!mapHierarchy[locationId]) {
+                console.error('Location not found:', locationId);
+                return;
+            }
+            
+            const locationData = mapHierarchy[locationId];
+            if (locationData.redirectTo) {
+                locationId = locationData.redirectTo;
+            }
+            
+            saveCurrentLocationCharacters();
+            deselectAll();
+            navigationPath.push(locationId);
+            loadLocation(locationId);
+            saveNavigationState();
+        }
+        
+        function goBackOneLevel() {
+            if (navigationPath.length <= 1) return;
+            
+            saveCurrentLocationCharacters();
+            deselectAll();
+            navigationPath.pop();
+            
+            const locationId = getCurrentLocation();
+            loadLocation(locationId);
+            saveNavigationState();
+        }
+        
+        function navigateToBreadcrumb(index) {
+            if (index < 0 || index >= navigationPath.length) return;
+            if (index === navigationPath.length - 1) return;
+            
+            saveCurrentLocationCharacters();
+            deselectAll();
+            navigationPath = navigationPath.slice(0, index + 1);
+            
+            const locationId = getCurrentLocation();
+            loadLocation(locationId);
+            saveNavigationState();
+        }
+        
+        function loadLocation(locationId) {
+            const locationData = getLocationData(locationId);
+            if (!locationData) return;
+            
+            const mapImage = document.getElementById('mapImage');
+            mapImage.src = locationData.imgBase + locationData.imgExt;
+            
+            mapImage.onerror = function() {
+                this.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><rect fill="%232a1a12" width="800" height="600"/><text x="50%" y="50%" font-family="Arial" font-size="20" fill="%23e8d4b8" text-anchor="middle">Imagem não encontrada: ' + locationData.name + '</text></svg>';
+            };
+            
+            document.getElementById('currentMapTitle').textContent = locationData.name;
+            updateBreadcrumb();
+            
+            const backButton = document.getElementById('backButton');
+            backButton.classList.toggle('visible', navigationPath.length > 1);
+            
+            clearHotspots();
+            if (locationData.hotspots) {
+                createHotspots(locationData.hotspots);
+            }
+            
+            updateFloorSelector(locationData);
+            
+            const toggleBtn = document.getElementById('toggleLocationsBtn');
+            if (locationId === 'general' && locationData.hotspots) {
+                toggleBtn.style.display = 'block';
+            } else {
+                toggleBtn.style.display = 'none';
+            }
+            
+            loadCharactersForLocation(locationId);
+        }
+        
+        function updateBreadcrumb() {
+            const breadcrumb = document.getElementById('breadcrumb');
+            breadcrumb.innerHTML = '';
+            
+            const currentLocationId = navigationPath[navigationPath.length - 1];
+            const locationData = getLocationData(currentLocationId);
+            
+            if (!locationData) return;
+            
+            const item = document.createElement('div');
+            item.className = 'breadcrumb-item';
+            item.innerHTML = `<span class="breadcrumb-current">${locationData.icon} ${locationData.name}</span>`;
+            
+            breadcrumb.appendChild(item);
+        }
+        
+        function updateFloorSelector(locationData) {
+            const floorSelector = document.getElementById('floorSelector');
+            floorSelector.innerHTML = '';
+            floorSelector.classList.remove('visible');
+            return;
+        }
+        
+        function navigateToFloor(floorId) {
+            saveCurrentLocationCharacters();
+            deselectAll();
+            
+            const currentLocationId = getCurrentLocation();
+            const currentLocationData = getLocationData(currentLocationId);
+            const targetLocationData = getLocationData(floorId);
+            
+            if (currentLocationData.parentFloorSystem && 
+                targetLocationData.parentFloorSystem === currentLocationData.parentFloorSystem) {
+                navigationPath[navigationPath.length - 1] = floorId;
+            } else if (currentLocationData.hasFloors) {
+                navigationPath.push(floorId);
+            } else {
+                navigationPath.push(floorId);
+            }
+            
+            loadLocation(floorId);
+            saveNavigationState();
+        }
+        
+        function clearHotspots() {
+            document.querySelectorAll('.hotspot').forEach(h => h.remove());
+        }
+        
+        function createHotspots(hotspots) {
+            const mapContainer = document.getElementById('mapContainer');
+            
+            hotspots.forEach(hotspot => {
+                const hotspotEl = document.createElement('div');
+                hotspotEl.className = 'hotspot location-hotspot';
+                hotspotEl.title = hotspot.title;
+                hotspotEl.dataset.location = hotspot.id;
+                
+                Object.entries(hotspot.position).forEach(([key, value]) => {
+                    hotspotEl.style[key] = value;
+                });
+                
+                let markerClass = 'hotspot-marker';
+                if (hotspot.isSecret) {
+                    markerClass += ' secret';
+                } else if (hotspot.isHidden) {
+                    markerClass += ' hidden';
+                }
+                hotspotEl.innerHTML = `<div class="${markerClass}"></div>`;
+                
+                hotspotEl.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    hideHotspotTooltip();
+                    
+                    const targetLocation = mapHierarchy[hotspot.id];
+                    if (targetLocation && targetLocation.isPointOfInterest) {
+                        alert(`📍 ${targetLocation.name}\n\n${targetLocation.description}`);
+                    } else {
+                        navigateToLocation(hotspot.id);
+                    }
+                });
+                
+                hotspotEl.addEventListener('mouseenter', showHotspotTooltip);
+                hotspotEl.addEventListener('mousemove', moveHotspotTooltip);
+                hotspotEl.addEventListener('mouseleave', hideHotspotTooltip);
+                
+                mapContainer.appendChild(hotspotEl);
+            });
+        }
+        
+        function showHotspotTooltip(e) {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.textContent = e.currentTarget.title;
+            tooltip.style.opacity = '1';
+        }
+        
+        function moveHotspotTooltip(e) {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.style.left = (e.pageX + 15) + 'px';
+            tooltip.style.top = (e.pageY + 15) + 'px';
+        }
+        
+        function hideHotspotTooltip() {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.style.opacity = '0';
+        }
+
+        // ========================================================================
+        // COPY/PASTE SYSTEM
+        // ========================================================================
+        
+        function copySelectedCharacters() {
+            if (selectedCharacters.size === 0) {
+                alert('⚠️ Selecione personagens primeiro para copiar!');
+                return;
+            }
+            
+            copiedCharacters = [];
+            selectedCharacters.forEach(charId => {
+                const char = characters.find(c => c.id === charId);
+                if (char) {
+                    copiedCharacters.push({
+                        name: char.name,
+                        type: char.type,
+                        icon: char.icon,
+                        x: char.x,
+                        y: char.y
+                    });
+                }
+            });
+            
+            const pasteBtn = document.getElementById('pasteBtn');
+            pasteBtn.disabled = false;
+            pasteBtn.classList.add('active');
+            
+            const copyBtn = document.getElementById('copyBtn');
+            const originalText = copyBtn.innerHTML;
+            copyBtn.innerHTML = `✓ ${copiedCharacters.length} Copiado(s)`;
+            copyBtn.style.background = '#4d6446';
+            
+            setTimeout(() => {
+                copyBtn.innerHTML = originalText;
+                copyBtn.style.background = '';
+            }, 2000);
+        }
+        
+        function pasteCharacters() {
+            if (copiedCharacters.length === 0) {
+                alert('⚠️ Nenhum personagem copiado!');
+                return;
+            }
+            
+            copiedCharacters.forEach(charData => {
+                const newChar = {
+                    id: nextCharId++,
+                    name: charData.name,
+                    type: charData.type,
+                    icon: charData.icon,
+                    x: charData.x,
+                    y: charData.y
+                };
+                
+                characters.push(newChar);
+                renderCharacter(newChar);
+            });
+            
+            saveCurrentLocationCharacters();
+            
+            const pasteBtn = document.getElementById('pasteBtn');
+            const originalText = pasteBtn.innerHTML;
+            pasteBtn.innerHTML = `✓ ${copiedCharacters.length} Colado(s)`;
+            pasteBtn.style.background = '#4d6446';
+            
+            setTimeout(() => {
+                pasteBtn.innerHTML = originalText;
+                pasteBtn.style.background = '';
+            }, 2000);
+        }
+        
+        // Atalhos de teclado APENAS para copiar/colar e névoa
+        document.addEventListener('keydown', (e) => {
+            // Ctrl+C / Cmd+C - Copiar
+            if ((e.ctrlKey || e.metaKey) && e.key === 'c' && !e.target.matches('input, textarea')) {
+                if (selectedCharacters.size > 0) {
+                    e.preventDefault();
+                    copySelectedCharacters();
+                }
+            }
+            
+            // Ctrl+V / Cmd+V - Colar
+            if ((e.ctrlKey || e.metaKey) && e.key === 'v' && !e.target.matches('input, textarea')) {
+                if (copiedCharacters.length > 0) {
+                    e.preventDefault();
+                    pasteCharacters();
+                }
+            }
+            
+            // F - Toggle Névoa de Poeira
+            if (e.key === 'f' && !e.target.matches('input, textarea')) {
+                e.preventDefault();
+                toggleAllFog();
+            }
+        });
+        
+        // ========================================================================
+        // CHARACTER CREATION
+        // ========================================================================
+        
+        function quickAddCharacter() {
+            placingCharacter = {
+                pending: true
+            };
+            
+            document.getElementById('mapContainer').classList.add('placing-character');
+        }
+        
+        // ========================================================================
+        // CHARACTER MANAGEMENT
+        // ========================================================================
+        
+        function saveCurrentLocationCharacters() {
+            const locationId = getCurrentLocation();
+            charactersByLocation[locationId] = [...characters];
+            saveAllCharactersToStorage();
+        }
+        
+        function loadCharactersForLocation(locationId) {
+            document.querySelectorAll('.character-marker').forEach(m => m.remove());
+            characters = charactersByLocation[locationId] || [];
+            characters.forEach(char => renderCharacter(char));
+        }
+        
+        function placeCharacter(x, y) {
+            if (!placingCharacter) return;
+
+            pendingCharacterPosition = { x, y };
+            
+            const mapImage = document.getElementById('mapImage');
+            const rect = mapImage.getBoundingClientRect();
+            const pixelX = (x / 100) * rect.width;
+            const pixelY = (y / 100) * rect.height;
+            
+            const inlineInput = document.getElementById('inlineNameInput');
+            inlineInput.style.left = pixelX + 'px';
+            inlineInput.style.top = pixelY + 'px';
+            inlineInput.classList.add('active');
+            
+            const field = document.getElementById('inlineNameField');
+            field.value = '';
+            setTimeout(() => field.focus(), 100);
+        }
+        
+        function confirmInlineName() {
+            const name = document.getElementById('inlineNameField').value.trim();
+            
+            if (!name) {
+                alert('Por favor, digite um nome!');
+                return;
+            }
+            
+            const character = {
+                id: nextCharId++,
+                name: name,
+                type: 'player',
+                icon: '👤',
+                x: pendingCharacterPosition.x,
+                y: pendingCharacterPosition.y
+            };
+            
+            characters.push(character);
+            renderCharacter(character);
+            saveCurrentLocationCharacters();
+            
+            closeInlineNameInput();
+        }
+        
+        function cancelInlineName() {
+            closeInlineNameInput();
+        }
+        
+        function closeInlineNameInput() {
+            document.getElementById('inlineNameInput').classList.remove('active');
+            document.getElementById('inlineNameField').value = '';
+            placingCharacter = null;
+            pendingCharacterPosition = null;
+            document.getElementById('mapContainer').classList.remove('placing-character');
+        }
+        
+        function renderCharacter(char) {
+            const mapContainer = document.getElementById('mapContainer');
+            const marker = document.createElement('div');
+            marker.className = `character-marker character-${char.type}`;
+            marker.id = `char-${char.id}`;
+            marker.style.left = `${char.x}%`;
+            marker.style.top = `${char.y}%`;
+            marker.style.transform = 'translate(-50%, -50%)';
+
+            marker.innerHTML = `
+                <div class="character-icon">${char.icon}</div>
+                <div class="character-label">${char.name}</div>
+                <div class="character-remove" onclick="removeCharacter(${char.id}); event.stopPropagation();">✕</div>
+            `;
+
+            mapContainer.appendChild(marker);
+        }
+        
+        function removeCharacter(charId) {
+            characters = characters.filter(c => c.id !== charId);
+            const marker = document.getElementById(`char-${charId}`);
+            if (marker) marker.remove();
+            saveCurrentLocationCharacters();
+            selectedCharacters.delete(charId);
+        }
+
+        // ========================================================================
+        // MULTI-SELECTION SYSTEM
+        // ========================================================================
+        
+        function setupMultiSelection() {
+            const mapContainer = document.getElementById('mapContainer');
+            const mapImage = document.getElementById('mapImage');
+            const selectionBox = document.getElementById('selectionBox');
+            
+            mapImage.addEventListener('dragstart', (e) => {
+                e.preventDefault();
+                return false;
+            });
+            
+            mapImage.style.userSelect = 'none';
+            mapImage.style.webkitUserSelect = 'none';
+            mapImage.style.mozUserSelect = 'none';
+
+            mapContainer.addEventListener('mousedown', (e) => {
+                if (placingCharacter) {
+                    return;
+                }
+                
+                if (e.target.classList.contains('hotspot-marker') || e.target.closest('.hotspot')) return;
+                
+                e.preventDefault();
+                
+                const clickedChar = e.target.closest('.character-marker');
+                
+                if (clickedChar) {
+                    const charId = parseInt(clickedChar.id.replace('char-', ''));
+                    
+                    if (e.ctrlKey || e.metaKey) {
+                        toggleCharacterSelection(charId);
+                        return;
+                    }
+                    
+                    if (selectedCharacters.has(charId)) {
+                        isDraggingGroup = true;
+                        isSelecting = false;
+                        dragGroupStart = { x: e.clientX, y: e.clientY };
+                        mapContainer.style.cursor = 'grabbing';
+                        return;
+                    }
+                    
+                    deselectAll();
+                    selectCharacter(charId);
+                    isDraggingGroup = true;
+                    isSelecting = false;
+                    dragGroupStart = { x: e.clientX, y: e.clientY };
+                    mapContainer.style.cursor = 'grabbing';
+                    return;
+                }
+                
+                if (e.target === mapImage || e.target === mapContainer) {
+                    if (!e.ctrlKey && !e.metaKey) {
+                        deselectAll();
+                    }
+                    
+                    isDraggingGroup = false;
+                    isSelecting = true;
+                    
+                    const rect = mapImage.getBoundingClientRect();
+                    selectionStart.x = e.clientX - rect.left;
+                    selectionStart.y = e.clientY - rect.top;
+                    
+                    selectionBox.style.left = selectionStart.x + 'px';
+                    selectionBox.style.top = selectionStart.y + 'px';
+                    selectionBox.style.width = '0px';
+                    selectionBox.style.height = '0px';
+                    selectionBox.classList.add('active');
+                    mapContainer.classList.add('selecting');
+                }
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isDraggingGroup && !isSelecting) {
+                    e.preventDefault();
+                    const deltaX = e.clientX - dragGroupStart.x;
+                    const deltaY = e.clientY - dragGroupStart.y;
+                    
+                    const rect = mapImage.getBoundingClientRect();
+                    const deltaXPercent = (deltaX / rect.width) * 100;
+                    const deltaYPercent = (deltaY / rect.height) * 100;
+                    
+                    moveSelectedCharacters(deltaXPercent, deltaYPercent);
+                    
+                    dragGroupStart = { x: e.clientX, y: e.clientY };
+                    return;
+                }
+                
+                if (isSelecting && !isDraggingGroup) {
+                    e.preventDefault();
+                    const rect = mapImage.getBoundingClientRect();
+                    const currentX = e.clientX - rect.left;
+                    const currentY = e.clientY - rect.top;
+                    
+                    const width = Math.abs(currentX - selectionStart.x);
+                    const height = Math.abs(currentY - selectionStart.y);
+                    const left = Math.min(currentX, selectionStart.x);
+                    const top = Math.min(currentY, selectionStart.y);
+                    
+                    selectionBox.style.left = left + 'px';
+                    selectionBox.style.top = top + 'px';
+                    selectionBox.style.width = width + 'px';
+                    selectionBox.style.height = height + 'px';
+                    
+                    updateSelectionInBox(left, top, width, height, rect);
+                }
+            });
+
+            document.addEventListener('mouseup', (e) => {
+                if (isDraggingGroup) {
+                    isDraggingGroup = false;
+                    mapContainer.style.cursor = '';
+                    saveCurrentLocationCharacters();
+                }
+                
+                if (isSelecting) {
+                    isSelecting = false;
+                    selectionBox.classList.remove('active');
+                    mapContainer.classList.remove('selecting');
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Delete' || e.key === 'Backspace') {
+                    if (selectedCharacters.size > 0 && !e.target.matches('input, textarea')) {
+                        e.preventDefault();
+                        deleteSelected();
+                    }
+                }
+                
+                if (e.key === 'Escape') {
+                    deselectAll();
+                    if (document.getElementById('inlineNameInput').classList.contains('active')) {
+                        cancelInlineName();
+                    }
+                    if (placingCharacter) {
+                        placingCharacter = null;
+                        document.getElementById('mapContainer').classList.remove('placing-character');
+                    }
+                }
+                
+                if (e.key === 'Enter' && document.getElementById('inlineNameInput').classList.contains('active')) {
+                    confirmInlineName();
+                }
+            });
+        }
+
+        function updateSelectionInBox(left, top, width, height, containerRect) {
+            characters.forEach(char => {
+                const marker = document.getElementById(`char-${char.id}`);
+                if (!marker) return;
+                
+                const markerRect = marker.getBoundingClientRect();
+                const markerX = markerRect.left + markerRect.width / 2 - containerRect.left;
+                const markerY = markerRect.top + markerRect.height / 2 - containerRect.top;
+                
+                const inBox = markerX >= left && markerX <= left + width &&
+                              markerY >= top && markerY <= top + height;
+                
+                if (inBox) {
+                    selectCharacter(char.id);
+                }
+            });
+        }
+
+        function selectCharacter(charId) {
+            selectedCharacters.add(charId);
+            const marker = document.getElementById(`char-${charId}`);
+            if (marker) {
+                marker.classList.add('selected');
+            }
+        }
+
+        function deselectCharacter(charId) {
+            selectedCharacters.delete(charId);
+            const marker = document.getElementById(`char-${charId}`);
+            if (marker) {
+                marker.classList.remove('selected');
+            }
+        }
+
+        function toggleCharacterSelection(charId) {
+            if (selectedCharacters.has(charId)) {
+                deselectCharacter(charId);
+            } else {
+                selectCharacter(charId);
+            }
+        }
+
+        function deselectAll() {
+            selectedCharacters.forEach(charId => {
+                const marker = document.getElementById(`char-${charId}`);
+                if (marker) {
+                    marker.classList.remove('selected');
+                }
+            });
+            selectedCharacters.clear();
+        }
+
+        function moveSelectedCharacters(deltaX, deltaY) {
+            selectedCharacters.forEach(charId => {
+                const char = characters.find(c => c.id === charId);
+                if (char) {
+                    char.x = Math.max(0, Math.min(100, char.x + deltaX));
+                    char.y = Math.max(0, Math.min(100, char.y + deltaY));
+                    
+                    const marker = document.getElementById(`char-${charId}`);
+                    if (marker) {
+                        marker.style.left = `${char.x}%`;
+                        marker.style.top = `${char.y}%`;
+                    }
+                }
+            });
+        }
+
+        function deleteSelected() {
+            if (selectedCharacters.size === 0) return;
+            
+            selectedCharacters.forEach(charId => {
+                const marker = document.getElementById(`char-${charId}`);
+                if (marker) marker.remove();
+                characters = characters.filter(c => c.id !== charId);
+            });
+            
+            selectedCharacters.clear();
+            saveCurrentLocationCharacters();
+        }
+
+        // ========================================================================
+        // FOG OF WAR SYSTEM (Poeira do Deserto)
+        // ========================================================================
+        
+        function toggleAllFog() {
+            fogEnabled = !fogEnabled;
+            const fogLayer = document.getElementById('fogLayer');
+            
+            if (fogEnabled) {
+                fogLayer.classList.add('active');
+            } else {
+                fogLayer.classList.remove('active');
+            }
+        }
+
+        // ========================================================================
+        // UTILITY FUNCTIONS
+        // ========================================================================
+        
+        function toggleLocations() {
+            const locationId = getCurrentLocation();
+            if (locationId !== 'general') return;
+            
+            locationsVisible = !locationsVisible;
+            document.querySelectorAll('.location-hotspot').forEach(hotspot => {
+                hotspot.style.display = locationsVisible ? 'block' : 'none';
+            });
+            
+            const toggleBtn = document.getElementById('toggleLocationsBtn');
+            toggleBtn.textContent = locationsVisible ? '📍 Ocultar Locais' : '📍 Mostrar Locais';
+        }
+
+        // ========================================================================
+        // STORAGE FUNCTIONS
+        // ========================================================================
+        
+        function saveNavigationState() {
+            localStorage.setItem('westNavigationPath', JSON.stringify(navigationPath));
+        }
+        
+        function loadNavigationState() {
+            const saved = localStorage.getItem('westNavigationPath');
+            if (saved) {
+                try {
+                    navigationPath = JSON.parse(saved);
+                    if (navigationPath.length === 0) {
+                        navigationPath = ['general'];
+                    }
+                } catch (e) {
+                    navigationPath = ['general'];
+                }
+            }
+        }
+        
+        function saveAllCharactersToStorage() {
+            const locationId = getCurrentLocation();
+            charactersByLocation[locationId] = [...characters];
+            
+            let maxId = 0;
+            Object.values(charactersByLocation).forEach(locationChars => {
+                locationChars.forEach(char => {
+                    if (char.id > maxId) maxId = char.id;
+                });
+            });
+            
+            const saveData = {
+                charactersByLocation: charactersByLocation,
+                nextCharId: maxId + 1
+            };
+            
+            localStorage.setItem('westMapCharacters', JSON.stringify(saveData));
+        }
+        
+        function loadAllCharactersFromStorage() {
+            const saved = localStorage.getItem('westMapCharacters');
+            if (saved) {
+                try {
+                    const saveData = JSON.parse(saved);
+                    charactersByLocation = saveData.charactersByLocation || {};
+                    nextCharId = saveData.nextCharId || 1;
+                } catch (e) {
+                    console.error('Error loading characters:', e);
+                    charactersByLocation = {};
+                    nextCharId = 1;
+                }
+            }
+        }
+
+        // ========================================================================
+        // EVENT LISTENERS
+        // ========================================================================
+        
+        function setupEventListeners() {
+            const mapContainer = document.getElementById('mapContainer');
+            const mapImage = document.getElementById('mapImage');
+
+            mapContainer.addEventListener('click', (e) => {
+                if (placingCharacter) {
+                    if (e.target.classList.contains('map-image') || e.target === mapContainer) {
+                        const rect = mapImage.getBoundingClientRect();
+                        const x = ((e.clientX - rect.left) / rect.width) * 100;
+                        const y = ((e.clientY - rect.top) / rect.height) * 100;
+                        
+                        placeCharacter(x, y);
+                    }
+                }
+            });
+        }
+
+        // ========================================================================
+        // INITIALIZATION
+        // ========================================================================
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            setupEventListeners();
+            setupMultiSelection();
+            
+            loadAllCharactersFromStorage();
+            loadNavigationState();
+            
+            const locationId = getCurrentLocation();
+            loadLocation(locationId);
+        });
+    </script>
+</body>
+</html>
