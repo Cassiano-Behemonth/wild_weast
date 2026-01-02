@@ -1002,7 +1002,7 @@
         // CONFIGURAÇÃO DA ESTRUTURA DE MAPAS E ANDARES
         // ========================================================================
         
-        const mapHierarchy = {
+            const mapHierarchy = {
             general: {
                 id: 'general',
                 name: 'Velho Albatroz',
@@ -1075,8 +1075,19 @@
                 imgBase: 'Ouroboros',
                 imgExt: '.png',
                 icon: '🐍',
-                description: 'Local misterioso conhecido como Ouroboros.',
-                hotspots: []
+                description: 'Local de mineração conhecido como Ouroboros.',
+                hotspots: [{ id: 'mina_camada_1', title: 'Mina de escavação', position: { top: '50%', right: '60.3%' }}
+                ]
+            },
+
+            mina_camada_1: {
+            id: 'mina_camada_1',
+                name: 'Pico Mina de escavação',
+                imgBase: 'mina_camada_1',
+                imgExt: '.png',
+                icon: '',
+                description: 'Mina de escavação',
+                hotspots: [],
             },
             
             // ============ TRIBOS DO VENTO SUL ============
@@ -1087,6 +1098,21 @@
                 imgExt: '.png',
                 icon: '🏕️',
                 description: 'Acampamento das tribos indígenas locais.',
+                hotspots: [
+                    { id: 'cacique', title: 'Tenda do Cacique', position: { top: '37%', left: '48.5%' } }
+                ]
+            },
+            
+            cacique: {
+                id: 'cacique',
+                name: 'Tenda do Cacique',
+                imgBase: 'cacique',
+                imgExt: '.png',
+                icon: '👑',
+                description: 'Tenda do líder tribal.',
+                hotspots: [
+                    { id: 'tribos', title: 'Sair da Tenda', position: { bottom: '5%', left: '50%' } }
+                ]
             },
             
             // ============ REGIÃO LESTE (CANYON & WHISKEY CREEK) ============
@@ -1097,18 +1123,95 @@
                 imgExt: '.png',
                 icon: '🏜️',
                 description: 'Região dos canyons e Whiskey Creek.',
-                hotspots: [ {id: 'loja_de_armas', title: 'Loja de armas', position: { top: '38%', left: '27%' } }]
+                hotspots: [
+                    { id: 'loja_de_armas', title: 'Loja de Armas', position: { top: '38%', left: '27%' } },
+                    { id: 'mercante_regiao_leste', title: 'Mercante', position: { top: '52%', left: '45%' } },
+                    { id: 'cartazes_recompensa_leste', title: 'Cartazes de Recompensa', position: { top: '21%', right: '50%' } },
+                    { id: 'delegacia_leste', title: 'Delegacia', position: { top: '20%', right: '70%' } },
+                    { id: 'bar_leste', title: 'Bar', position: { top: '63%', right: '43%' } }
+
+                ]
             },
 
-            loja_de_armas:{
+            loja_de_armas: {
                 id: 'loja_de_armas',
                 name: 'Loja de Armas',
                 imgBase: 'loja_de_armas',
                 imgExt: '.png',
-                icon: '',
-                description: 'loja de armas da região leste',
-                hotspots: []
+                icon: '🔫',
+                description: 'Loja de armas da região leste.',
+                hotspots: [
+                    
+                ]
             },
+            
+            mercante_regiao_leste: {
+                id: 'mercante_região_leste',
+                name: 'Mercante da Região Leste',
+                imgBase: 'mercante_da_região_leste ',
+                imgExt: '.png',
+                icon: '🛒',
+                description: 'Mercante local com mercadorias variadas.',
+                hotspots: [
+                ]
+            },
+            
+            cartazes_recompensa_leste: {
+                id: 'cartazes_recompensa_leste',
+                name: 'Cartazes de Recompensa',
+                imgBase: 'cartazes_de_recompensa_leste',
+                imgExt: '.png',
+                icon: '📜',
+                description: 'Cartazes com recompensas por criminosos procurados.',
+                hotspots: [
+                ]
+            },
+
+            delegacia_leste: {
+                id: 'delegacia_leste',
+                name: 'Delegacia leste',
+                imgBase: 'delegacia_leste',
+                imgExt: '.png',
+                icon: '',
+                description: 'Delegacia do sherif do leste',
+                hotspots: []
+
+            },
+
+            bar_leste: {
+                id: 'bar_leste',
+                name: 'Bar do leste',
+                imgBase: 'bar_leste',
+                imgExt: '.png',
+                icon: '',
+                description: 'Bar do leste',
+                hotspots: []
+
+            },
+
+            //=================== gargantas ====================================//
+            gargantas: {
+                id: 'gargantas',
+                name: 'Gargantas do Desespero',
+                imgBase: 'Gargantas_do_Desespero',
+                imgExt: '.png',
+                icon: '⛰️',
+                description: 'Gargantas rochosas traiçoeiras.',
+                hotspots: [
+                     {id: 'casa_central', title: 'casa central', position: { top: '38%', left: '49%' } },
+                ]
+            },
+
+            casa_central: {
+                id: 'casa_central',
+                name: 'casa central',
+                imgBase: 'chef_da_garganta',
+                imgExt: '.png',
+                icon: '',
+                description: 'Casa do dono da garganta.'
+            },
+
+
             
             // ============ OUTRAS LOCALIZAÇÕES (MAPAS SIMPLES) ============
             pico_abutre: {
@@ -1120,14 +1223,7 @@
                 description: 'Pico mais alto da região.'
             },
             
-            gargantas: {
-                id: 'gargantas',
-                name: 'Gargantas do Desespero',
-                imgBase: 'Gargantas_do_Desespero',
-                imgExt: '.png',
-                icon: '⛰️',
-                description: 'Gargantas rochosas traiçoeiras.'
-            },
+           
             
             dustty_spur: {
                 id: 'dustty_spur',
@@ -1137,6 +1233,7 @@
                 icon: '🌪️',
                 description: 'Pequena cidade empoeirada.'
             }
+
         };
 
         // ========================================================================
